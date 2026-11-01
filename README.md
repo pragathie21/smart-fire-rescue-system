@@ -1,85 +1,410 @@
-# Smart Fire and Rescue Response System
-**Town of Sudar Emergency Services &bull; Computer-Aided Dispatch (CAD)**
+# 🚒 Smart Fire and Rescue Response System
 
-A full-stack, database-connected emergency management and response system built for the fictional town of **Sudar**, utilizing **PHP 8.2**, **MySQL (InnoDB)**, **Java 25**, and modern **Vanilla HTML5/CSS3/JavaScript**.
+### Town of Sudar Emergency Services | Computer-Aided Dispatch (CAD)
 
----
+A full-stack, database-connected emergency management and response system developed for the fictional town of Sudar. The system automates emergency incident reporting, severity assessment, priority-based dispatching, equipment compatibility verification, and shortest-route calculation.
 
-## 1. System Overview & Architecture
+**Built with PHP 8.2, MySQL 8.x, Java 25, HTML5, CSS3 and JavaScript.**
 
-The **Smart Fire and Rescue Response System** provides an automated, end-to-end emergency management workflow:
-1. **Intake & Sequential IDs**: Incident reporting without manual IDs; IDs are generated sequentially (`1, 2, 3...`) via MySQL `AUTO_INCREMENT`.
-2. **Geographical Support**: Real-world GPS geolocation ("Use My Current Location"), reverse geocoding fallback, and interactive Leaflet OpenStreetMap alongside the simulated 14-node Sudar road network.
-3. **Automated Severity Assessment**: A 10-question assessment form evaluated by a transparent rules-based scoring engine (`SeverityScorer.php`), categorizing emergencies into `Low`, `Medium`, `High`, or `Critical`.
-4. **Multiple Equipment Checkboxes**: Selection of 7 standardized equipment types with normalized relational storage and unit inventory compatibility verification.
-5. **Priority-Based Dispatch**: Automatic assignment matching highest-priority incidents, unit type/equipment compatibility, and Dijkstra shortest travel time, locked via atomic MySQL transactions.
-6. **Email Notifications**: Real SMTP email notifications sent to authorized duty officers via an RFC 5321 socket client / PHPMailer with status tracking, audit logs, and retry capabilities.
-7. **Dijkstra Shortest Route Planner**: Dual implementation in PHP and Java with dynamic road closure/reopening support and non-negative travel times.
-8. **Incident Lifecycle & Auth**: Multi-stage mission status (`Pending` ➔ `Dispatched` ➔ `In Progress` ➔ `Completed`), session-based officer authentication, unit release to `Available`, and automatic re-evaluation of waiting incidents.
+![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?logo=php&logoColor=white)
+![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.x-4479A1?logo=mysql&logoColor=white)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black)
+![Status](https://img.shields.io/badge/Status-Academic%20Project-success)
 
 ---
 
-## 2. Database Schema (`smart_fire_rescue`)
+## 📌 1. Project Overview
 
-The system utilizes 11 normalized InnoDB tables with foreign key constraints, indexes, and transactional integrity:
+The **Smart Fire and Rescue Response System** is a Computer-Aided Dispatch (CAD) application designed to improve emergency response operations through intelligent automation.
 
-| Table | Purpose | Primary Key | Key Foreign Keys & Indexes |
-| :--- | :--- | :--- | :--- |
-| `locations` | Sudar landmark locations & coordinates | `location_id` | `VARCHAR(50)` |
-| `stations` | Emergency fire & rescue stations | `station_id` | `location_id` ➔ `locations` |
-| `equipment_types` | Master catalog of certified emergency equipment | `code` | `VARCHAR(50)` |
-| `response_units` | Emergency response fleet (Engines, Vans) | `unit_id` | `station_id` ➔ `stations` |
-| `unit_equipment` | Equipment inventory assigned to each unit | `id` (Auto) | `unit_id` ➔ `response_units`, `equipment_code` ➔ `equipment_types` |
-| `roads` | Weighted adjacency graph connecting locations | `road_id` (Auto) | `from_location_id`, `to_location_id` ➔ `locations`, `status` |
-| `incidents` | Emergency incidents with assessment & triage | `incident_id` (Auto) | `location_id` ➔ `locations`, `status`, `severity_tier` |
-| `incident_equipment` | Mandatory equipment needed per incident | `id` (Auto) | `incident_id` ➔ `incidents`, `equipment_code` ➔ `equipment_types` |
-| `dispatch_records` | Dispatch assignments, routes, travel time | `dispatch_id` (Auto) | `incident_id` ➔ `incidents`, `unit_id` ➔ `response_units` |
-| `users` | Authorized personnel, dispatchers & chiefs | `user_id` (Auto) | `username` (Unique), `role` |
-| `email_logs` | Audit trail of notification delivery attempts | `log_id` (Auto) | `dispatch_id` ➔ `dispatch_records`, `status` |
+Traditional emergency response systems may experience delays due to manual incident prioritization, unsuitable unit assignments, equipment mismatches, and inefficient route selection.
 
----
+This system addresses these challenges by integrating automated incident assessment, priority-based dispatching, equipment compatibility checking, and Dijkstra's Shortest Path Algorithm.
 
-## 3. Technology Stack
+The application uses a simulated 14-node road network representing the fictional town of Sudar, alongside real-world GPS location detection and interactive maps.
 
-- **Backend**: Native Object-Oriented PHP 8.2 with PDO prepared statements and atomic transactions.
-- **Database**: MySQL 8.x (InnoDB engine, foreign keys, `utf8mb4`).
-- **Java Routing Engine**: OpenJDK 25 (`RoadNetwork.java`, `RoutePlanner.java`, `RoutePlannerCli.java`, `RoutePlannerTest.java`).
-- **Frontend**: Vanilla HTML5, CSS3 Custom Properties (Emergency Dark Theme), Leaflet.js 1.9.4 for OpenStreetMap.
-- **Email Delivery**: RFC 5321 Direct SMTP Socket Client with STARTTLS, AUTH LOGIN, MIME HTML formatting, and local file fallback.
-- **Web Server**: Apache 2.4 / XAMPP on Windows.
+### 🎯 Project Objectives
+
+- Automate emergency incident registration.
+- Generate sequential incident IDs automatically.
+- Identify emergency severity using a rules-based assessment engine.
+- Prioritize incidents according to urgency.
+- Automatically assign suitable available emergency units.
+- Verify equipment compatibility before dispatch.
+- Calculate the shortest travel-time route.
+- Support dynamic road closures and alternative route calculation.
+- Notify authorized duty officers through email.
+- Maintain incident, dispatch, and notification records.
 
 ---
 
-## 4. Setup & Installation Instructions
+## ✨ 2. Key Features
 
-### Step 1: Place Files in XAMPP htdocs
-Clone or extract the repository to:
+### 2.1 Incident Reporting and Location Detection
+
+- Automatic sequential incident IDs using MySQL `AUTO_INCREMENT`.
+- GPS-based location detection using the browser's geolocation API.
+- Reverse geocoding fallback for location identification.
+- Interactive Leaflet maps using OpenStreetMap.
+- Simulated 14-node Sudar road network.
+- Incident location and assessment data persistence.
+
+### 2.2 Automated Severity Assessment
+
+The system uses a 10-question assessment form to evaluate emergency conditions.
+
+The `SeverityScorer.php` engine calculates a transparent rules-based severity score and classifies incidents into four levels:
+
+| Severity | Priority |
+|---|---|
+| Critical | Highest |
+| High | High |
+| Medium | Moderate |
+| Low | Normal |
+
+Administrators can also perform authorized severity overrides.
+
+### 2.3 Equipment Compatibility Management
+
+The application supports seven standardized emergency equipment types.
+
+- Multiple equipment selection using checkboxes.
+- Normalized relational database storage.
+- Unit equipment inventory management.
+- Equipment compatibility verification.
+- Suitable response unit identification.
+
+### 2.4 Automatic Priority-Based Dispatch
+
+The dispatch engine automatically:
+
+1. Identifies pending incidents.
+2. Evaluates incident priority.
+3. Identifies available response units.
+4. Checks unit type and equipment compatibility.
+5. Calculates travel time using the shortest available route.
+6. Assigns a suitable response unit.
+7. Stores dispatch information using atomic MySQL transactions.
+
+The system also supports manual dispatching by authorized dispatchers.
+
+### 2.5 Dijkstra Shortest Route Planner
+
+The project implements Dijkstra's Shortest Path Algorithm in both PHP and Java.
+
+Features include:
+
+- Weighted road network.
+- Travel-time-based shortest path calculation.
+- Dynamic road closure and reopening.
+- Alternative route selection.
+- Unreachable destination detection.
+- Route restoration after road reopening.
+
+### 2.6 Email Notification System
+
+The notification system supports:
+
+- SMTP-based email delivery.
+- STARTTLS secure connection.
+- SMTP authentication.
+- HTML-formatted email notifications.
+- Authorized duty officer notifications.
+- Notification status tracking.
+- Email audit logs.
+- Retry functionality.
+- Local email file fallback for development.
+
+### 2.7 Incident Lifecycle Management
+
+The system supports the following incident lifecycle:
+
+`Pending → Dispatched → In Progress → Completed`
+
+Additional functionality:
+
+- Track incident progress.
+- Maintain dispatch history.
+- Release response units after mission completion.
+- Update unit availability.
+- Automatically re-evaluate waiting incidents.
+
+### 2.8 User Authentication and Role Management
+
+Three user roles are supported:
+
+| Role | Permissions |
+|---|---|
+| Officer | Update mission progress, complete missions, release units |
+| Admin | Full administrative control, severity overrides, road management |
+| Dispatcher | Incident intake, automatic and manual dispatching |
+
+Authentication uses PHP sessions and hashed passwords.
+
+---
+
+## 🏗️ 3. System Architecture and Workflow
+
+The system combines a PHP backend, MySQL database, Java routing implementation, and a Vanilla JavaScript frontend.
+
+### Emergency Response Workflow
+
+```text
+        Incident Reporting
+                |
+                v
+       GPS Location Detection
+                |
+                v
+      10-Question Assessment
+                |
+                v
+      Severity Scoring Engine
+                |
+                v
+       Priority Classification
+                |
+                v
+      Equipment Compatibility
+                |
+                v
+       Available Unit Selection
+                |
+                v
+       Automatic Unit Dispatch
+                |
+                v
+       Dijkstra Route Planning
+                |
+                v
+       Email Notifications
+                |
+                v
+       Incident Status Tracking
+                |
+                v
+        Mission Completion
+                |
+                v
+       Unit Availability Update
+                |
+                v
+       Pending Incident Recheck
 ```
+
+### Main Architectural Components
+
+| Component | Responsibility |
+|---|---|
+| Frontend | Incident forms, dashboards, maps and management pages |
+| PHP Backend | Business logic, authentication and dispatch processing |
+| MySQL | Persistent storage and transaction management |
+| Java Routing Engine | Dijkstra algorithm implementation |
+| Email Service | SMTP notifications and delivery logs |
+| Leaflet / OpenStreetMap | Interactive geographical visualization |
+
+---
+
+## 🗄️ 4. Database Schema
+
+**Database Name:** `smart_fire_rescue`
+
+The system uses 11 normalized MySQL InnoDB tables with foreign key constraints, indexes, and transactional integrity.
+
+| Table | Purpose |
+|---|---|
+| `locations` | Sudar landmarks and geographical coordinates |
+| `stations` | Emergency fire and rescue stations |
+| `equipment_types` | Standardized emergency equipment catalog |
+| `response_units` | Fire engines and rescue vans |
+| `unit_equipment` | Equipment inventories assigned to units |
+| `roads` | Weighted road network connections |
+| `incidents` | Incident reports and severity assessments |
+| `incident_equipment` | Equipment requirements for incidents |
+| `dispatch_records` | Unit assignments, routes and travel times |
+| `users` | Authorized officers, admins and dispatchers |
+| `email_logs` | Notification delivery attempts and audit records |
+
+The database uses:
+
+- InnoDB storage engine.
+- Foreign key constraints.
+- Auto-increment primary keys.
+- Indexed columns.
+- PDO prepared statements.
+- Atomic transactions.
+
+---
+
+## 🛠️ 5. Technology Stack
+
+| Technology | Version / Tool | Purpose |
+|---|---|---|
+| PHP | 8.2 | Backend development |
+| Java | OpenJDK 25 | Routing algorithm |
+| MySQL | 8.x | Database management |
+| HTML5 | Modern HTML | Web structure |
+| CSS3 | Custom Properties | Emergency-themed interface |
+| JavaScript | Vanilla JS | Frontend interactions |
+| Leaflet.js | 1.9.4 | Interactive maps |
+| OpenStreetMap | Map data | Geographical visualization |
+| Apache | 2.4 | Web server |
+| XAMPP | Local environment | Development and testing |
+| SMTP | STARTTLS | Email notifications |
+
+### Important Algorithms and Concepts
+
+- Dijkstra's Shortest Path Algorithm.
+- Priority-based incident scheduling.
+- Rules-based severity scoring.
+- Equipment compatibility matching.
+- Database transactions and concurrency control.
+- Object-Oriented Programming.
+- Relational database normalization.
+
+---
+
+## 📂 6. Project Structure
+
+```text
+smart-fire-rescue/
+│
+├── actions/
+│   ├── auto-dispatch.php
+│   ├── close-road.php
+│   ├── complete-mission.php
+│   ├── dispatch-incident.php
+│   ├── override-severity.php
+│   ├── reopen-road.php
+│   ├── retry-email.php
+│   ├── save-incident.php
+│   └── update-incident-status.php
+│
+├── assets/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── app.js
+│
+├── classes/
+│   ├── DispatchService.php
+│   ├── EmailNotificationService.php
+│   ├── Incident.php
+│   ├── ResponseUnit.php
+│   ├── RoadNetwork.php
+│   ├── RoutePlanner.php
+│   └── SeverityScorer.php
+│
+├── includes/
+│   ├── auth.php
+│   ├── footer.php
+│   ├── functions.php
+│   ├── header.php
+│   └── sidebar.php
+│
+├── Main.java
+├── DispatchRecord.java
+├── DispatchService.java
+├── FireEngine.java
+├── FireStation.java
+├── Incident.java
+├── IncidentManager.java
+├── IncidentPriorityPolicy.java
+├── RescueVan.java
+├── ResponseUnit.java
+├── RoadNetwork.java
+├── RoutePlanner.java
+├── RoutePlannerCli.java
+├── RoutePlannerTest.java
+│
+├── api.php
+├── config.php
+├── db.php
+├── database.sql
+├── dashboard.php
+├── report-incident.php
+├── incidents.php
+├── incident-details.php
+├── units.php
+├── roads.php
+├── dispatch.php
+├── records.php
+├── login.php
+├── logout.php
+├── migrate.php
+├── test_suite.php
+├── README.md
+└── .gitignore
+```
+
+---
+
+## ⚙️ 7. Installation and Setup
+
+### Prerequisites
+
+Install the following software:
+
+- XAMPP with PHP 8.2.
+- MySQL 8.x or compatible MySQL/MariaDB installation.
+- Java JDK 25.
+- Web browser.
+- Git.
+
+### Step 1: Clone the Repository
+
+Open PowerShell or VS Code Terminal:
+
+```bash
+git clone https://github.com/pragathie21/smart-fire-rescue-system.git
+```
+
+### Step 2: Move Project into XAMPP
+
+Place the project folder inside:
+
+```text
 C:\xampp\htdocs\smart-fire-rescue
 ```
 
-### Step 2: Start Apache and MySQL
-Open the **XAMPP Control Panel** and click **Start** next to:
-- **Apache** (Port 80 / 443)
-- **MySQL** (Port 3306)
+### Step 3: Start Apache and MySQL
 
-### Step 3: Database Import via phpMyAdmin or Migration Script
+Open XAMPP Control Panel.
+
+Start:
+
+- Apache (Port 80 / 443)
+- MySQL (Port 3306)
+
+### Step 4: Create the Database
+
 **Option A: Automated Migration (Recommended)**
-Open PowerShell or Command Prompt:
+
+Open PowerShell:
+
 ```powershell
 cd C:\xampp\htdocs\smart-fire-rescue
+
 C:\xampp\php\php.exe migrate.php
 ```
 
 **Option B: phpMyAdmin Import**
-1. Navigate to `http://localhost/phpmyadmin/`.
-2. Click **Databases** ➔ Create database named `smart_fire_rescue` with collation `utf8mb4_unicode_ci`.
-3. Select `smart_fire_rescue` from the sidebar.
-4. Click the **Import** tab.
-5. Choose file `C:\xampp\htdocs\smart-fire-rescue\database.sql` and click **Import**.
 
-### Step 4: Verify Database Connection (`db.php`)
-Inspect `db.php`:
+1. Open `http://localhost/phpmyadmin/`.
+2. Create a database named `smart_fire_rescue`.
+3. Select `utf8mb4_unicode_ci` collation.
+4. Select the database.
+5. Open the Import tab.
+6. Choose `database.sql`.
+7. Click Import.
+
+### Step 5: Configure Database Connection
+
+Inspect `db.php` and configure the database connection:
+
 ```php
 define('DB_HOST', 'localhost');
 define('DB_PORT', 3306);
@@ -88,8 +413,24 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 ```
 
-### Step 5: Configure SMTP Email (`smtp_config.php`)
-Copy `smtp_config.example.php` to `smtp_config.php` and configure:
+Adjust credentials according to your local MySQL configuration.
+
+### Step 6: Configure SMTP Email (Optional)
+
+Copy:
+
+```text
+smtp_config.example.php
+```
+
+Rename the copy to:
+
+```text
+smtp_config.php
+```
+
+Configure your SMTP settings:
+
 ```php
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 587);
@@ -97,87 +438,172 @@ define('SMTP_AUTH', true);
 define('SMTP_USER', 'your-email@gmail.com');
 define('SMTP_PASS', 'your-app-password');
 define('SMTP_SECURE', 'tls');
-define('SMTP_FROM_EMAIL', 'cad@sudar.gov.in');
+define('SMTP_FROM_EMAIL', 'your-sender@gmail.com');
 define('SMTP_FROM_NAME', 'Sudar Emergency Dispatch');
-define('OFFICER_NOTIFY_EMAIL', 'duty-officer@sudar.gov.in');
+define('OFFICER_NOTIFY_EMAIL', 'your-officer-email@example.com');
 define('SMTP_LOG_FALLBACK', true);
 ```
-*Note: If no live SMTP server is configured, `SMTP_LOG_FALLBACK` is enabled by default. Notifications will be logged to `storage/emails/email_dispatch_*.html` with complete delivery simulation.*
+
+**Security:** Never upload real SMTP passwords, app passwords, or private credentials to GitHub.
+
+When live SMTP is not configured, the local fallback can generate email HTML logs under:
+
+```text
+storage/emails/
+```
+
+### Step 7: Run the Application
+
+Open:
+
+```text
+http://localhost/smart-fire-rescue/
+```
+
+Dashboard:
+
+```text
+http://localhost/smart-fire-rescue/dashboard.php
+```
 
 ---
 
-## 5. User Roles & Credentials
+## 🧪 8. Testing and Verification
 
-The database is pre-seeded with 3 authorized accounts (passwords hashed with `PASSWORD_BCRYPT`):
+The project includes a PHP test suite and Java routing tests.
 
-| Username | Password | Role | Permissions |
-| :--- | :--- | :--- | :--- |
-| `officer` | `Officer@2026` | `Officer` | Mark In-Progress, Complete missions, release units |
-| `admin` | `Admin@2026` | `Admin` | Full administrative control, severity triage overrides, road controls |
-| `dispatcher` | `Dispatch@2026` | `Dispatcher` | Incident intake, automatic and manual dispatching |
+### PHP Automated Test Suite
 
----
+Execute:
 
-## 6. Testing & Verification
-
-### Running the Full PHP Test Suite
-Execute the 14-point test suite in PowerShell:
 ```powershell
 cd C:\xampp\htdocs\smart-fire-rescue
+
 C:\xampp\php\php.exe test_suite.php
 ```
-All 14 automated tests validate:
-1. Sequential Incident IDs (`1, 2, 3...`)
-2. GPS coordinate and geocoded address persistence
-3. Rules-based severity triage and score calculation
-4. Multiple equipment capability requirements
-5. Priority dispatch and double-assignment locking
-6. Dijkstra shortest-path calculation
-7. Alternate route routing on road closure
-8. Road reopening path restoration
-9. Unreachable destination detection
-10. Email dispatch notification generation
-11. Safe email retry mechanism
-12. Mission completion and unit availability release
-13. Authorized severity score override
-14. MySQL database consistency across models
 
-### Running the Java Routing Tests
-Verify Dijkstra's algorithm in Java:
-```powershell
-cd C:\xampp\htdocs\smart-fire-rescue
+The 14-point test suite validates:
+
+1. Sequential incident ID generation.
+2. GPS coordinate and geocoded address persistence.
+3. Rules-based severity assessment.
+4. Multiple equipment requirements.
+5. Priority-based dispatch and duplicate-assignment locking.
+6. Dijkstra shortest-path calculation.
+7. Alternative route selection after road closure.
+8. Route restoration after road reopening.
+9. Unreachable destination detection.
+10. Email dispatch notification generation.
+11. Safe email retry mechanism.
+12. Mission completion and unit availability release.
+13. Authorized severity score override.
+14. Database consistency across models.
+
+### Java Routing Tests
+
+Compile:
+
+```bash
 javac RoutePlannerTest.java
+```
+
+Execute:
+
+```bash
 java RoutePlannerTest
 ```
-All 4 Java test cases will execute:
-- Test 1: Normal route (`StationA -> Road1 -> Hospital`, 7 mins)
-- Test 2: Alternate route after closing Road1-Hospital (`StationA -> Road2 -> Factory -> Road4 -> TechPark -> Hospital`, 20 mins)
-- Test 3: Unreachable destination detection (`-1 mins`, empty path)
-- Test 4: Road reopening restoration (`StationA -> Road1 -> Hospital`, 7 mins)
 
-### Running Java CLI Routing directly:
-```powershell
+The four test cases cover:
+
+| Test | Scenario | Expected Result |
+|---|---|---|
+| Test 1 | Normal route | 7 minutes |
+| Test 2 | Alternative route after road closure | 20 minutes |
+| Test 3 | Unreachable destination | -1 minutes |
+| Test 4 | Route after road reopening | 7 minutes |
+
+### Java CLI Routing
+
+Run:
+
+```bash
 java RoutePlannerCli StationA Hospital
-# Output: {"success":true,"origin":"StationA","destination":"Hospital","path":["StationA","Road1","Hospital"],"travel_time_minutes":7}
+```
+
+Expected JSON output:
+
+```json
+{
+  "success": true,
+  "origin": "StationA",
+  "destination": "Hospital",
+  "path": ["StationA", "Road1", "Hospital"],
+  "travel_time_minutes": 7
+}
 ```
 
 ---
 
-## 7. Web Application Navigation
+## 🌐 9. Web Application Navigation
 
-| Page | URL | Description |
-| :--- | :--- | :--- |
-| **Dashboard** | `http://localhost/smart-fire-rescue/dashboard.php` | Real-time statistics, active units, and recent incidents |
-| **Report Incident** | `http://localhost/smart-fire-rescue/report-incident.php` | GPS location, Leaflet map, assessment questions, equipment checkboxes |
-| **Incident Management** | `http://localhost/smart-fire-rescue/incidents.php` | Tabular list of incidents, statuses, triage scores, and filters |
-| **Incident Details** | `http://localhost/smart-fire-rescue/incident-details.php?id=1` | Live route map, triage breakdown, override controls, and mission completion |
-| **Response Units** | `http://localhost/smart-fire-rescue/units.php` | Unit fleet status, station assignments, and onboard equipment inventories |
-| **Dispatch History** | `http://localhost/smart-fire-rescue/records.php` | Complete audit trail of assignments, travel times, and notification delivery |
-| **Road Network Manager** | `http://localhost/smart-fire-rescue/roads.php` | Interactive road closure/reopening controls and Dijkstra route test simulator |
-| **Login / Logout** | `http://localhost/smart-fire-rescue/login.php` | Session-based authentication with 1-click role demo logins |
-| **REST API Gateway** | `http://localhost/smart-fire-rescue/api.php` | JSON endpoints consumed by static HTML pages and external clients |
+| Module | Local URL | Description |
+|---|---|---|
+| Dashboard | `/dashboard.php` | Emergency statistics and active units |
+| Report Incident | `/report-incident.php` | GPS, map and emergency assessment |
+| Incident Management | `/incidents.php` | Incident records and priority |
+| Incident Details | `/incident-details.php?id=1` | Route, severity and mission controls |
+| Response Units | `/units.php` | Unit availability and equipment |
+| Dispatch History | `/records.php` | Dispatch and notification audit records |
+| Road Network | `/roads.php` | Road closures and route testing |
+| Login | `/login.php` | Officer and administrator authentication |
+| REST API | `/api.php` | JSON endpoints |
+
+All URLs above are relative to:
+
+```text
+http://localhost/smart-fire-rescue
+```
 
 ---
 
-## 8. Disclaimer
-This software is an academic simulation prototype designed for educational demonstration in emergency management systems. It is not connected to real municipal fire departments, police CAD systems, or live 911/112 emergency networks.
+## 🔮 10. Future Enhancements
+
+- Real-time emergency vehicle GPS tracking.
+- Live traffic-based route optimization.
+- Mobile application for emergency incident reporting.
+- AI-based emergency severity prediction.
+- Advanced emergency resource allocation.
+- Integration with real emergency service infrastructure.
+- Real-time notifications and monitoring dashboards.
+
+---
+
+## ⚠️ 11. Disclaimer
+
+This software is an academic simulation prototype developed for educational and demonstration purposes.
+
+It uses a fictional town named Sudar and is not connected to real municipal fire departments, police Computer-Aided Dispatch systems, or live 911/112 emergency networks.
+
+The system should not be used for actual emergency response operations.
+
+---
+
+## 👩‍💻 12. Project Information
+
+**Project:** Smart Fire and Rescue Response System
+
+**Organization:** Town of Sudar Emergency Services
+
+**Domain:** Emergency Management | Web Development | Data Structures and Algorithms
+
+**Architecture:** Full-Stack Web Application with Java Routing Engine
+
+**GitHub Repository:**
+
+https://github.com/pragathie21/smart-fire-rescue-system
+
+---
+
+⭐ If you find this project interesting, consider giving the repository a star!
+
+### Faster Decisions. Smarter Dispatch. Safer Communities. 🚒
