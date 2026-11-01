@@ -1,0 +1,8 @@
+
+*.class
+test_cookie.txt
+test_user_cookie.txt
+smtp_config.php
+.env
+.vscode/
+storage/emails/*
