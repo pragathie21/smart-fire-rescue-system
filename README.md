@@ -607,3 +607,13 @@ https://github.com/pragathie21/smart-fire-rescue-system
 ⭐ If you find this project interesting, consider giving the repository a star!
 
 ### Faster Decisions. Smarter Dispatch. Safer Communities. 🚒
+## Project Screenshots
+
+### Home Page
+![Home Page](screenshots/Screenshot%202026-10-29%20221528.png)
+
+### Incident Report
+![Incident Report](screenshots/Screenshot%202026-10-29%2022137.png)
+
+### Dashboard
+![Dashboard](screenshots/Screenshot%202026-10-29%20222408.png)
